@@ -1,0 +1,129 @@
+---
+title: "IBM Analysis of Global COVID-19 Pandemic Data"
+author: "CFerri"
+date: "2022-10-21"
+output: html_document
+---
+
+```{r}
+##Load necessry libraries
+library(httr)
+library(rvest)
+```
+
+```{r Task 1}
+#Task 1 Create HTTP request to obtain COVID-19 Wiki page
+covid_wiki_url <- 'https://en.wikipedia.org/w/index.php?title=Template:COVID-19_testing_by_country'
+covid_wiki_response <- GET(covid_wiki_url)
+covid_wiki_response
+```
+
+```{r Task 2}
+#Task 2 Extract COVID-19 testing data table from wiki HTML page
+covid_root_node <- read_html(covid_wiki_response)
+covid_table <- html_node(covid_root_node, 'table')
+covid_wiki_df <- html_table(covid_table)
+print(covid_wiki_df)
+```
+
+```{r Task 3}
+#Task 3 Pre-process and export the extracted data frame
+preprocess_covid_data_frame <- function(covid_wiki_df) {
+  shape <- dim(covid_wiki_df)
+
+#Remove the World row
+covid_wiki_df <- covid_wiki_df[!(covid_wiki_df$`Country or region`=="World"),]
+#Remove the last row
+covid_wiki_df <- covid_wiki_df[1:172, ]
+
+#Remove Units and Ref columns
+covid_wiki_df["Ref."] <- NULL
+covid_wiki_df["Units[b]"] <- NULL
+
+#Renaming Columns
+names(covid_wiki_df) <- c("country", "date", "tested", "confirmed", "confirmed.tested.ratio", "tested.population.ratio", "confirmed.population.ratio")
+
+#Convert column data types
+covid_wiki_df$country <- as.factor(covid_wiki_df$country)
+covid_wiki_df$date <- as.factor(covid_wiki_df$date)
+covid_wiki_df$tested <- as.numeric(gsub(",","",covid_wiki_df$tested))
+covid_wiki_df$confirmed <- as.numeric(gsub(",","",covid_wiki_df$confirmed))
+covid_wiki_df$'confirmed.tested.ratio' <- as.numeric(gsub(",","",covid_wiki_df$'confirmed.tested.ratio'))
+covid_wiki_df$'tested.population.ratio' <- as.numeric(gsub(",","",covid_wiki_df$'tested.population.ratio'))
+covid_wiki_df$'confirmed.population.ratio' <- as.numeric(gsub(",","",covid_wiki_df$'confirmed.population.ratio'))
+
+return(covid_wiki_df)
+}
+preprocess_covid_df <- preprocess_covid_data_frame(covid_wiki_df)
+print(preprocess_covid_df)
+
+
+##Save to .csv file
+write.csv(preprocess_covid_df)
+```
+
+```{r Task 4}
+##Task 4 Return a subset of the extracted data frame
+task_4_subset <- subset(preprocess_covid_df[c(5,10),c(1,4)]) ##Fifth and tenth rows with country and confirmed columns
+task_4_subset
+```
+
+```{r Task 5}
+##Task 5 Return the total confirmed cases worldwide
+total_ww_cases <- sum(preprocess_covid_df$confirmed)
+total_ww_cases
+
+##Return the total tested cases worldwide
+total_ww_tested <- sum(preprocess_covid_df$tested)
+total_ww_tested
+
+##Return the positive ratio
+ww_positive_ratio <- (total_ww_cases/total_ww_tested)
+ww_positive_ratio
+```
+
+```{r Task 6}
+##Task 6 Return the 'country' column
+covid_country <- preprocess_covid_df$country
+##Check Class
+class(covid_country)
+##Covert country column from factor to character for manipulation
+covid_country <- as.character(covid_country)
+##Sort countries A to Z
+sort(covid_country)
+##Sort countries Z to A
+covid_country <- sort(covid_country, decreasing = TRUE)
+print(covid_country)
+```
+```{r Task 7}
+##Task 7 Use regular expressions to match countries containing "United"
+united_countries <- grep('United.+',(preprocess_covid_df$country), value = TRUE)
+united_countries
+```
+```{r Task 8}
+##Task 8 Create subsets for two countries. Randomly selected 132, Portugal, and 153, Sweden.
+task_8_subset <- subset(preprocess_covid_df[132,c(1,4,7)])
+task_8_subset
+portugal_subset <- task_8_subset
+rm(task_8_subset)
+task_8_subset <- subset(preprocess_covid_df[153,c(1,4,7)])
+task_8_subset
+sweden_subset <- task_8_subset
+rm(task_8_subset)
+```
+```{r Task 9}
+##Task 9 Create if statement to show which country of two selected has more confirmed cases
+portugal_confirmed <- 1499976
+sweden_confirmed <- 1074751
+if(portugal_confirmed > sweden_confirmed) {
+     print(portugal_subset)
+     }else{
+         print(sweden_subset)
+ }
+```
+```{r Task 10}
+##Task 10 Find countries with 'confirmed.population.ratio' less than the threshold
+threshold <- .01
+less_than_1_percent <- preprocess_covid_df[preprocess_covid_df$confirmed.population.ratio < threshold, c(1,7)]
+less_than_1_percent
+```
