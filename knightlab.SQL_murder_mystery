@@ -1,6 +1,6 @@
 > Provided by Knight Lab https://mystery.knightlab.com/walkthrough.html, this exercise introduces SQL in a murder mystery theme as information which leads us to the murderer and mastermind is contained within various tables. This exercise is intended to showcase beginner and intermediate SQL skills. 
 
-![Knight_Lab_ERD](PortfolioProjects/knightlab.SQL_murder_mystery/Knight_Lab_SQL_ERD.jpg)
+![Knight Lab ERD](/PortfolioProjects/Knight_Lab_SQL_ERD.jpg)
 
 > First, we pull crime scene reports for crimes meeting the criteria of our murder.
 
